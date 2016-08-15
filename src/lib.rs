@@ -56,6 +56,10 @@ pub struct RustLDAP {
 	ldap_ptr: *mut LDAP
 }
 
+
+unsafe impl Sync for RustLDAP {}
+unsafe impl Send for RustLDAP {}
+
 impl Drop for RustLDAP {
 
 	fn drop(&mut self){
