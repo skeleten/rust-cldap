@@ -17,13 +17,16 @@ pub struct LDAPControl;
 #[repr(C)]
 struct BerElement;
 
+unsafe impl Sync for LDAP {}
+unsafe impl Send for LDAP {}
+
 #[link(name = "lber")]
 #[allow(improper_ctypes)]
 extern {
 	fn ber_free(ber: *const BerElement, freebuf: c_int);
 }
 
-#[link(name = "ldap")]
+#[link(name = "ldap_r")]
 #[allow(improper_ctypes)]
 extern {
 	fn ldap_initialize(ldap: *mut *mut LDAP, uri: *const c_char) -> c_int;

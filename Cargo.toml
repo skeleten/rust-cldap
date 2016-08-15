@@ -1,6 +1,6 @@
 [package]
 name = "openldap"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Josh Leverette <coder543@gmail.com>", "Ross Delinger <rossdylan@csh.rit.edu>"]
 license = "MIT"
 readme = "README.md"
