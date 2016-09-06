@@ -10,7 +10,7 @@ server.
 
 Using openldap is as easy as the following.
 
-```
+```rust
 extern crate openldap;
 
 use openldap::*;
