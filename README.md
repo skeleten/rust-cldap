@@ -42,4 +42,4 @@ message from the native OpenLDAP library.
 
 ## developers
 
-To author new changes to this library, do XYZ.
+I'm happy to accept contributions. If you have work you want to be merged back into `master`, send me a pull request and I will be happy to look at it. I prefer changes which don't break the API, of course, but I'm willing to consider breaking changes.
