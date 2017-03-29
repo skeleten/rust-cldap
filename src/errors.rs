@@ -28,12 +28,11 @@ impl fmt::Display for LDAPError {
 }
 
 impl error::Error for LDAPError {
-
     /// Get the description of this error.
     ///
     fn description(&self) -> &str {
         match *self {
-            LDAPError::NativeError(ref err) => err
+            LDAPError::NativeError(ref err) => err,
         }
     }
 
@@ -51,4 +50,3 @@ impl convert::From<String> for LDAPError {
         LDAPError::NativeError(err)
     }
 }
-
