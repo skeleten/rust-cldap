@@ -11,8 +11,8 @@ use std::convert;
 /// only one type of error raised: `LDAPError::NativeError`. A `LDAPError::NativeError` includes a
 /// string field describing the error in more detail.
 ///
-/// A `LDAPError` implements necessary traits (i.e., std::fmt::Display, std::error::Error, and
-/// std::convert::From) to do proper error handling using the `try!` macro.
+/// A `LDAPError` implements necessary traits (i.e., `std::fmt::Display`, `std::error::Error`, and
+/// `std::convert::From`) to do proper error handling using the `try!` macro.
 ///
 #[derive(Debug, PartialEq)]
 pub enum LDAPError {

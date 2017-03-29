@@ -1,4 +1,4 @@
-//! Objects for connecting and querying LDAP servers using OpenLDAP.
+//! Objects for connecting and querying LDAP servers using `OpenLDAP`.
 //!
 //! Current support includes connection, initializing, binding, configuring, and search against an
 //! LDAP directory.
@@ -80,7 +80,7 @@ extern "C" {
                          -> c_int;
 }
 
-/// A typedef for an LDAPResponse type.
+/// A typedef for an `LDAPResponse` type.
 ///
 /// LDAP responses are organized as vectors of mached entities. Typically, each entity is
 /// represented as a map of attributes to list of values.
@@ -88,16 +88,16 @@ extern "C" {
 pub type LDAPResponse = Vec<HashMap<String, Vec<String>>>;
 
 
-/// A high level abstraction over the raw OpenLDAP functions.
+/// A high level abstraction over the raw `OpenLDAP` functions.
 ///
-/// A `RustLDAP` object hides raw OpenLDAP complexities and exposes a simple object that is
-/// created, configured, and queried. Methods that call underlying OpenLDAP calls that can fail
+/// A `RustLDAP` object hides raw `OpenLDAP` complexities and exposes a simple object that is
+/// created, configured, and queried. Methods that call underlying `OpenLDAP` calls that can fail
 /// will raise an `errors::LDAPError` with additional details.
 ///
 /// Using a `RustLDAP` object is easy!
 ///
 pub struct RustLDAP {
-    /// A pointer to the underlying OpenLDAP object.
+    /// A pointer to the underlying `OpenLDAP` object.
     ldap_ptr: *mut LDAP,
 }
 
@@ -123,13 +123,13 @@ impl Drop for RustLDAP {
 
 /// A trait for types that can be passed as LDAP option values.
 ///
-/// Underlying OpenLDAP implementation calls for option values to be passed in as *const c_void,
-/// while allowing values to be i32 or string. Using traits, we implement function overloading to
-/// handle i32 and string option value types.
+/// Underlying `OpenLDAP` implementation calls for option values to be passed in as `*const c_void`,
+/// while allowing values to be `i32` or `String`. Using traits, we implement function overloading to
+/// handle `i32` and `String` option value types.
 ///
 /// This trait allocates memory that a caller must free using `std::boxed::Box::from_raw`. This
 /// helps guarantee that there is not a use after free bug (in Rust) while providing the appearance
-/// of opaque memory to OpenLDAP (in C). In pure C, we would've accomplished this by casting a
+/// of opaque memory to `OpenLDAP` (in C). In pure C, we would've accomplished this by casting a
 /// local variable to a `const void *`. In Rust, we must do this on the heap to ensure Rust's
 /// ownership system does not free the memory used to store the option value between now and when
 /// the option is actually set.
@@ -154,26 +154,23 @@ impl LDAPOptionValue for i32 {
 
 impl LDAPOptionValue for bool {
     fn as_cvoid_ptr(&self) -> *const c_void {
-        match *self {
-            true => {
-                let mem = unsafe { boxed::Box::new(&ber_pvt_opt_on) };
-                boxed::Box::into_raw(mem) as *const c_void
-            }
-            false => {
-                let mem = boxed::Box::new(0);
-                boxed::Box::into_raw(mem) as *const c_void
-            }
+        if *self {
+            let mem = unsafe { boxed::Box::new(&ber_pvt_opt_on) };
+            boxed::Box::into_raw(mem) as *const c_void
+        } else {
+            let mem = boxed::Box::new(0);
+            boxed::Box::into_raw(mem) as *const c_void
         }
     }
 }
 
 impl RustLDAP {
-    /// Creat a new RustLDAP.
+    /// Create a new `RustLDAP`.
     ///
-    /// Creates a new RustLDAP and initializes underlying OpenLDAP library. Upon creation, a
+    /// Creates a new `RustLDAP` and initializes underlying `OpenLDAP` library. Upon creation, a
     /// subsequent calls to `set_option` and `simple_bind` are possible. Before calling a search
     /// related function, one must bind to the server by calling `simple_bind`. See module usage
-    /// information for more details on using a RustLDAP object.
+    /// information for more details on using a `RustLDAP` object.
     ///
     /// # Parameters
     ///
@@ -198,8 +195,7 @@ impl RustLDAP {
 
         }
 
-        let new_ldap = RustLDAP { ldap_ptr: cldap };
-        return Ok(new_ldap);
+        Ok(RustLDAP { ldap_ptr: cldap })
     }
 
     /// Sets an option on the LDAP connection.
@@ -219,16 +215,15 @@ impl RustLDAP {
             res = ldap_set_option(self.ldap_ptr, option, ptr);
             // Allows for memory to be dropped when this binding goes away.
             let _ = boxed::Box::from_raw(ptr as *mut c_void);
-            return res == 0;
+            res == 0
         }
-
     }
 
     /// Bind to the LDAP server.
     ///
     /// If you wish to configure options on the LDAP server, be sure to set required options using
     ///`set_option` _before_ binding to the LDAP server. In some advanced cases, it may be required
-    /// to set multiple options for an option to be made available. Refer to the OpenLDAP
+    /// to set multiple options for an option to be made available. Refer to the `OpenLDAP`
     /// documentation for information on available options and how to use them.
     ///
     /// # Parameters
@@ -250,7 +245,7 @@ impl RustLDAP {
                                                               .into_string()
                                                               .unwrap()));
             }
-            return Ok(res);
+            Ok(res)
         }
     }
 
@@ -264,20 +259,20 @@ impl RustLDAP {
     /// * scope - The search scope. See `cldap::codes::scopes`.
     ///
     pub fn simple_search(&self, base: &str, scope: i32) -> Result<LDAPResponse, errors::LDAPError> {
-        return self.ldap_search(base,
-                                scope,
-                                None,
-                                None,
-                                false,
-                                None,
-                                None,
-                                ptr::null_mut(),
-                                -1);
+        self.ldap_search(base,
+                         scope,
+                         None,
+                         None,
+                         false,
+                         None,
+                         None,
+                         ptr::null_mut(),
+                         -1)
     }
 
     /// Advanced synchronous search.
     ///
-    /// Exposes a raw API around the underlying `ldap_search_ext_s` function from OpenLDAP.
+    /// Exposes a raw API around the underlying `ldap_search_ext_s` function from `OpenLDAP`.
     /// Wherever possible, use provided wrappers.
     ///
     /// # Parameters
@@ -435,7 +430,8 @@ impl RustLDAP {
 
         // Make sure we free the message and return the parsed results.
         unsafe { ldap_msgfree(ldap_msg) };
-        return Ok(resvec);
+
+        Ok(resvec)
     }
 }
 
