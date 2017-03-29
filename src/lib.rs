@@ -383,7 +383,7 @@ impl RustLDAP {
                     // Map these into a vector of Strings.
                     let values: Vec<String> = val_slice.iter().map(|ptr| {
                         // TODO(sholsapp): If this contains binary data this will fail.
-                        CStr::from_ptr(*ptr).to_owned().into_string().unwrap_or("<cannot parse bindary data yet.>".to_string())
+                        CStr::from_ptr(*ptr).to_owned().into_string().unwrap_or("<cannot parse binary data yet.>".to_string())
                     }).collect();
 
                     // Insert newly constructed Rust key-value strings.
