@@ -46,6 +46,6 @@ When performing an operation that can fail, use the `try!` macro. On failure,
 an `openldap::errors::LDAPError` will be returned that includes a detailed
 message from the native OpenLDAP library.
 
-## developers
+## contributing
 
 I'm happy to accept contributions. If you have work you want to be merged back into `master`, send me a pull request and I will be happy to look at it. I prefer changes which don't break the API, of course, but I'm willing to consider breaking changes.
