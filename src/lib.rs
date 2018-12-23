@@ -85,7 +85,7 @@ extern "C" {
 /// LDAP responses are organized as vectors of mached entities. Typically, each entity is
 /// represented as a map of attributes to list of values.
 ///
-pub type LDAPResponse = Vec<HashMap<String, Vec<String>>>;
+pub type LDAPResponse = Vec<HashMap<String, Vec<LDAPValue>>>;
 
 
 /// A high level abstraction over the raw `OpenLDAP` functions.
@@ -364,14 +364,14 @@ impl RustLDAP {
 
         // We now have to parse the results, copying the C-strings into Rust ones making sure to
         // free the C-strings afterwards
-        let mut resvec: Vec<HashMap<String, Vec<String>>> = vec![];
+        let mut resvec: Vec<HashMap<String, Vec<LDAPValue>>> = vec![];
         let mut entry = unsafe { ldap_first_entry(self.ldap_ptr, ldap_msg) };
 
         while !entry.is_null() {
 
             // Make the map holding the attribute : value pairs as well as the BerElement that keeps
             // track of what position we're in
-            let mut map: HashMap<String, Vec<String>> = HashMap::new();
+            let mut map: HashMap<String, Vec<LDAPValue>> = HashMap::new();
             let mut ber: *mut BerElement = ptr::null_mut();
             unsafe {
                 // Populate the "DN" of the user
@@ -381,7 +381,7 @@ impl RustLDAP {
                             .to_owned()
                             .into_string()
                             .unwrap_or("<Invalid DN>".to_string()));
-                map.insert("dn".to_string(), dn);
+                map.insert("dn".to_string(), dn.into_iter().map(|s| LDAPValue::String(s)).collect());
                 ldap_memfree(raw_dn as *mut c_void);
 
                 let mut attr: *const c_char = ldap_first_attribute(self.ldap_ptr, entry, &mut ber);
@@ -398,13 +398,24 @@ impl RustLDAP {
                     let val_slice: &[*const c_char] = slice::from_raw_parts(raw_vals, raw_vals_len);
 
                     // Map these into a vector of Strings.
-                    let values: Vec<String> = val_slice.iter()
+                    let values: Vec<LDAPValue> = val_slice.iter()
                         .map(|ptr| {
                             // TODO(sholsapp): If this contains binary data this will fail.
-                            CStr::from_ptr(*ptr)
+                            let s = CStr::from_ptr(*ptr)
                                 .to_owned()
-                                .into_string()
-                                .unwrap_or("<cannot parse binary data yet.>".to_string())
+                                .into_string();
+                            if let Ok(s) = s {
+                                LDAPValue::String(s)
+                            } else {
+                                let v = CStr::from_ptr(*ptr)
+                                    .to_bytes()
+                                    .iter()
+                                    .map(|&u| u)
+                                    .collect::<Vec<u8>>();
+                                LDAPValue::Binary(v)
+                                // TODO: create valid binary
+                            }
+
                         })
                         .collect();
 
@@ -440,6 +451,7 @@ mod tests {
 
     use std::ptr;
     use codes;
+    use LDAPValue;
 
     const TEST_ADDRESS: &'static str = "ldap://ldap.forumsys.com";
     const TEST_BIND_DN: &'static str = "cn=read-only-admin,dc=example,dc=com";
@@ -498,7 +510,8 @@ mod tests {
         assert!(search_res.len() == 1);
 
         // make sure the DN is searched and returned correctly
-        assert_eq!(search_res[0]["dn"][0], "uid=tesla,dc=example,dc=com");
+        assert_eq!(search_res[0]["dn"][0],
+                   LDAPValue::String("uid=tesla,dc=example,dc=com".into()));
 
         for result in search_res {
             println!("simple search result: {:?}", result);
@@ -535,7 +548,8 @@ mod tests {
         assert!(search_res.len() == 1);
 
         // make sure the DN is searched and returned correctly
-        assert_eq!(search_res[0]["dn"][0], "uid=euler,dc=example,dc=com");
+        assert_eq!(search_res[0]["dn"][0],
+                   LDAPValue::String("uid=euler,dc=example,dc=com".into()));
 
         for result in search_res {
             println!("search result: {:?}", result);
@@ -640,4 +654,12 @@ mod tests {
 
     }
 
+}
+
+/// Represents a value used in attributes. May either be a valid
+/// `String`, or a blob of binary data, represented by a `Vec<u8>`
+#[derive(Debug, Eq, PartialEq)]
+pub enum LDAPValue {
+    String(String),
+    Binary(Vec<u8>),
 }
